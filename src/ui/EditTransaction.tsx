@@ -172,6 +172,13 @@ const ExpenseLine: React.FC<{
   const assetsAndLiabilities = union(
     props.txCache.assetAccounts,
     props.txCache.liabilityAccounts,
+    props.txCache.incomeAccounts
+  );
+
+  const assetsAndLiabilitiesAndIncomes = union(
+    props.txCache.assetAccounts,
+    props.txCache.liabilityAccounts,
+    props.txCache.incomeAccounts
   );
 
   const getSuggestions = (): string[] => {
@@ -184,7 +191,7 @@ const ExpenseLine: React.FC<{
       case 'income':
         return i !== lastI
           ? assetsAndLiabilities
-          : props.txCache.expenseAccounts;
+          : assetsAndLiabilitiesAndIncomes;
       case 'transfer':
         return assetsAndLiabilities;
     }

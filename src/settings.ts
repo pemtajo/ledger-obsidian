@@ -1,5 +1,5 @@
 const defaultSettings: ISettings = {
-  tutorialIndex: 0,
+  tutorialIndex: -1,
 
   currencySymbol: '$',
   ledgerFile: 'transactions.ledger',

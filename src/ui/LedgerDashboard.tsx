@@ -17,7 +17,7 @@ import {
   FlexMainContent,
   FlexShrink,
 } from './SharedStyles';
-import { RecentTransactionList, TransactionList } from './TransactionList';
+import { RecentTransactionList, TransactionList, MobileTransactionList } from './TransactionList';
 import { Step, Steps } from 'intro.js-react';
 import { Platform } from 'obsidian';
 import React from 'react';
@@ -74,15 +74,14 @@ const MobileDashboard: React.FC<{
 }> = (props): JSX.Element => {
   const [selectedTab, setSelectedTab] = React.useState('transactions');
 
-  /*
   return (
     <MobileTransactionList
       currencySymbol={props.settings.currencySymbol}
       txCache={props.txCache}
     />
   );
-  */
-  return <p>Dashboard not yet supported on mobile.</p>;
+
+  // return <p>Dashboard not yet supported on mobile.</p>;
 };
 
 const DesktopDashboard: React.FC<{
@@ -113,7 +112,7 @@ const DesktopDashboard: React.FC<{
 
   const [selectedAccounts, setSelectedAccounts] = React.useState<string[]>([]);
   const [startDate, setStartDate] = React.useState(
-    window.moment().subtract(2, 'months'),
+    window.moment().subtract(9, 'weeks'),
   );
   const [endDate, setEndDate] = React.useState(window.moment());
   const [interval, setInterval] = React.useState<Interval>('week');
