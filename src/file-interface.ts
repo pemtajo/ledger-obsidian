@@ -70,6 +70,29 @@ export const getTransactionCache = async (
     throw new Error('Ledger: Unable to find Ledger file to parse');
   }
 
-  const fileContents = await vault.read(file);
+  let fileContents = await vault.read(file);
+
+  // BRL preprocessing: when a prices.db is configured and readable, rewrite
+  // every posting to its BRL equivalent so the parser only ever sees R$
+  // amounts. Failure is non-fatal — the dashboard falls back to raw mixed-
+  // currency display, same as before this feature existed.
+  if (settings.pricesDBFile) {
+    try {
+      const pricesFile = cache.getFirstLinkpathDest(settings.pricesDBFile, '');
+      if (pricesFile) {
+        const pricesContent = await vault.read(pricesFile);
+        const { parsePricesDB, preprocessLedger } = await import('./prices');
+        const priceIndex = parsePricesDB(pricesContent);
+        fileContents = preprocessLedger(fileContents, priceIndex);
+      } else {
+        console.warn(
+          `Ledger: prices DB not found at "${settings.pricesDBFile}" — skipping BRL conversion`,
+        );
+      }
+    } catch (err) {
+      console.warn('Ledger: failed to apply BRL preprocessing', err);
+    }
+  }
+
   return parse(fileContents, settings);
 };

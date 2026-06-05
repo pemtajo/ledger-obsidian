@@ -42,11 +42,16 @@
         ws:     /[ \t]+/,
         absoluteNumber: { match: /[0-9.,]+/, value: (s:string) => s.replace(/,/g, '') },
         numberSign: /-/,
-        currency: /[R$£₤€₳₿₹¥￥₩Р₱₽₴₫]/, // Note: Р != P
+        // R$ is a multi-char token so e.g. "R$1.50" parses as currency=R$, amount=1.50
+        // (a single-char `R` class would split it into 2 tokens and break the amount rule).
+        currency: { match: /R\$|[$£₤€₳₿₹¥￥₩Р₱₽₴₫]/ }, // Note: Р != P
         reconciled: /[!*]/,
         comment: { match: /[;#|][^\n]+/, value: (s:string) => s.slice(1).trim() },
         assertion: {match: /==?\*?/},
-        account: { match: /[^$£₤€₳₿₹¥￥₩Р₱₽₴₫;#|\n\-]+/, value: (s:string) => s.replace(" R", '').trim() },
+        // Account regex stops at any currency-starting char (incl. R when followed by $).
+        // The trailing `.replace(/\s*R$/, '')` cleans the case where account-regex
+        // greedily ate the `R` of an `R$X.XX` amount before the currency token.
+        account: { match: /[^$£₤€₳₿₹¥￥₩Р₱₽₴₫;#|\n\-]+/, value: (s:string) => s.replace(/\s+R$/, '').trim() },
       },
       alias: {
         account: { match: /[a-zA-Z0-9: ]+/, value: (s:string) => s.trim() },
