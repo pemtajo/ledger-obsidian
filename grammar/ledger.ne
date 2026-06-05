@@ -48,10 +48,10 @@
         reconciled: /[!*]/,
         comment: { match: /[;#|][^\n]+/, value: (s:string) => s.slice(1).trim() },
         assertion: {match: /==?\*?/},
-        // Account regex stops at any currency-starting char (incl. R when followed by $).
-        // The trailing `.replace(/\s*R$/, '')` cleans the case where account-regex
-        // greedily ate the `R` of an `R$X.XX` amount before the currency token.
-        account: { match: /[^$£₤€₳₿₹¥￥₩Р₱₽₴₫;#|\n\-]+/, value: (s:string) => s.replace(/\s+R$/, '').trim() },
+        // Account regex: any char not in the exclusion list, OR `R` only when NOT
+        // followed by `$` (negative lookahead). Without the lookahead, R$X.XX
+        // postings get the R consumed by the account, breaking currency=R$ detection.
+        account: { match: /(?:[^R$£₤€₳₿₹¥￥₩Р₱₽₴₫;#|\n\-]|R(?!\$))+/, value: (s:string) => s.trim() },
       },
       alias: {
         account: { match: /[a-zA-Z0-9: ]+/, value: (s:string) => s.trim() },
