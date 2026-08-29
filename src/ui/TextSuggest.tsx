@@ -1,6 +1,7 @@
 import { Values } from './EditTransaction';
 import { FieldProps } from 'formik';
 import Fuse from 'fuse.js';
+import { uniqBy } from 'lodash';
 import React from 'react';
 import { usePopper } from 'react-popper';
 
@@ -19,7 +20,10 @@ export const TextSuggest: React.FC<
     props.suggestions.slice(0, props.displayCount),
   );
   const [fuse, setFuse] = React.useState(
-    new Fuse(props.suggestions, { threshold: 0.5 }),
+    new Fuse(props.suggestions, {
+      threshold: 0.3,
+      ignoreLocation: true,
+    }),
   );
 
   const [selectedIndex, setSelectedIndex] = React.useState(0);
@@ -35,13 +39,14 @@ export const TextSuggest: React.FC<
   });
 
   const updateCurrentSuggestions = (newValue: string): void => {
-    const newSuggestions =
+    const matches =
       newValue === ''
-        ? props.suggestions.slice(0, props.displayCount)
-        : fuse
-            .search(newValue)
-            .map((result) => result.item)
-            .slice(0, props.displayCount);
+        ? props.suggestions
+        : fuse.search(newValue).map((result) => result.item);
+    const newSuggestions = uniqBy(matches, (s) => s.trim().toLowerCase()).slice(
+      0,
+      props.displayCount,
+    );
     setCurrentSuggestions(newSuggestions);
     setSelectedIndex(Math.min(selectedIndex, newSuggestions.length - 1));
   };
@@ -49,7 +54,12 @@ export const TextSuggest: React.FC<
   // The Fuse object will not be automatically replaced when the suggestions are
   // changed so we need to detect and update manually.
   React.useEffect(() => {
-    setFuse(new Fuse(props.suggestions, { threshold: 0.5 }));
+    setFuse(
+      new Fuse(props.suggestions, {
+        threshold: 0.3,
+        ignoreLocation: true,
+      }),
+    );
     updateCurrentSuggestions(currentValue);
   }, [props.suggestions]);
 

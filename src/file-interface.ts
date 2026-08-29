@@ -1,6 +1,7 @@
 import LedgerPlugin from './main';
 import { AddExpenseModal, Operation } from './modals';
 import { EnhancedTransaction, parse, TransactionCache } from './parser';
+import { parsePricesDB, preprocessLedger } from './prices';
 import type { ISettings } from './settings';
 import type { MetadataCache, TFile, Vault } from 'obsidian';
 
@@ -81,7 +82,6 @@ export const getTransactionCache = async (
       const pricesFile = cache.getFirstLinkpathDest(settings.pricesDBFile, '');
       if (pricesFile) {
         const pricesContent = await vault.read(pricesFile);
-        const { parsePricesDB, preprocessLedger } = await import('./prices');
         const priceIndex = parsePricesDB(pricesContent);
         fileContents = preprocessLedger(fileContents, priceIndex);
       } else {

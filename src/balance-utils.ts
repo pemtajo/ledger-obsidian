@@ -8,17 +8,21 @@ export type ChartData = {
   y: number;
 }[];
 
+const sumByPrefix = (
+  balanceData: Map<string, number>,
+  prefix: string,
+): number =>
+  [...balanceData.entries()].reduce(
+    (accum, [acct, bal]) => (acct.startsWith(prefix) ? accum + bal : accum),
+    0,
+  );
+
 const calcNetWorth = (
   balanceData: Map<string, number>,
   settings: ISettings,
 ): number =>
-  [...balanceData.entries()].reduce((accum, curr) => {
-    const [acct, bal] = curr;
-    return acct.startsWith(settings.assetAccountsPrefix) ||
-      acct.startsWith(settings.liabilityAccountsPrefix)
-      ? accum + bal
-      : accum;
-  }, 0);
+  sumByPrefix(balanceData, settings.assetAccountsPrefix) +
+  sumByPrefix(balanceData, settings.liabilityAccountsPrefix);
 
 export const makeNetWorthData = (
   dailyAccountBalanceMap: Map<string, Map<string, number>>,
@@ -33,6 +37,34 @@ export const makeNetWorthData = (
       y: netWorth,
     };
   });
+
+/**
+ * makeAssetsAndLiabilitiesData creates the total-assets and total-liabilities
+ * (as a positive owed amount) series alongside the buckets, so a net worth
+ * chart can show what it's actually made of instead of just the netted total.
+ */
+export const makeAssetsAndLiabilitiesData = (
+  dailyAccountBalanceMap: Map<string, Map<string, number>>,
+  bucketNames: string[],
+  settings: ISettings,
+): { assets: ChartData; liabilities: ChartData } => {
+  const assets: ChartData = [];
+  const liabilities: ChartData = [];
+  bucketNames.forEach((bucket) => {
+    const balanceData = dailyAccountBalanceMap.get(bucket);
+    const assetTotal = balanceData
+      ? sumByPrefix(balanceData, settings.assetAccountsPrefix)
+      : 0;
+    const liabilityTotal = balanceData
+      ? sumByPrefix(balanceData, settings.liabilityAccountsPrefix)
+      : 0;
+    assets.push({ x: bucket, y: assetTotal });
+    // Liabilities are stored as negative balances; flip the sign so the chart
+    // shows "how much is owed" as a positive, easily comparable magnitude.
+    liabilities.push({ x: bucket, y: -liabilityTotal });
+  });
+  return { assets, liabilities };
+};
 
 /**
  * makeBalanceData creates a list of data points representing the balance of an

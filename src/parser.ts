@@ -2,7 +2,7 @@ import grammar from '../grammar/ledger';
 import { Error, TxError } from './error';
 import { ISettings } from './settings';
 import { dealiasAccount, firstDate } from './transaction-utils';
-import { flatMap, sortedUniq } from 'lodash';
+import { flatMap, uniqBy } from 'lodash';
 import { Moment } from 'moment';
 import { Grammar, Parser } from 'nearley';
 import { err, ok, Result } from 'neverthrow';
@@ -242,18 +242,18 @@ export const parse = (
     })
     .filter((tx): tx is EnhancedTransaction => !!tx);
 
-  const payees = sortedUniq(
-    txs
-      .map(({ value }) => value.payee)
-      .sort((a, b) => (a.toLowerCase() > b.toLowerCase() ? 1 : -1)),
-  );
-  const accounts = sortedUniq(
+  const payees = uniqBy(
+    txs.map(({ value }) => value.payee),
+    (payee) => payee.trim().toLowerCase(),
+  ).sort((a, b) => (a.toLowerCase() > b.toLowerCase() ? 1 : -1));
+  const accounts = uniqBy(
     flatMap(txs, ({ value }) =>
       value.expenselines.flatMap((line) =>
         'dealiasedAccount' in line ? [line.dealiasedAccount] : [],
       ),
-    ).sort((a, b) => (a.toLowerCase() > b.toLowerCase() ? 1 : -1)),
-  );
+    ),
+    (account) => account.trim().toLowerCase(),
+  ).sort((a, b) => (a.toLowerCase() > b.toLowerCase() ? 1 : -1));
 
   const assetAccounts: string[] = [];
   const expenseAccounts: string[] = [];
